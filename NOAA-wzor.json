@@ -1,0 +1,35 @@
+{
+    "dane":[
+    [
+        "Data",
+        "Zasieg[%]",
+        "Temp0[°C]",
+        "Temp1[°C]",
+        "Temp2[°C]",
+        "Temp3[°C]",
+        "Temp4[°C]",
+        "Temp5[°C]",
+        "Temp6[°C]",
+        "Temp7[°C]",
+        "Temp8[°C]",
+        "Wilgotnosc0[%]",
+        "Wilgotnosc1[%]",
+        "Wilgotnosc2[%]",
+        "Wilgotnosc3[%]",
+        "Wilgotnosc4[%]",
+        "Wilgotnosc5[%]",
+        "Wilgotnosc6[%]",
+        "Wilgotnosc7[%]",
+        "Wilgotnosc8[%]",
+        "Bateria0[%]",
+        "Bateria1[%]",
+        "Bateria2[%]",
+        "Bateria3[%]",
+        "Bateria4[%]",
+        "Bateria5[%]",
+        "Bateria6[%]",
+        "Bateria7[%]",
+        "Bateria8[%]"
+    ]
+]
+}
