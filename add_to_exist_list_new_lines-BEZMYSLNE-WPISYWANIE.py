@@ -2,7 +2,7 @@ import csv
 import json
 import os
 import pprint
-import sys
+
 
 ######## UWAGA TA WERSJA NADPISUJE caly plik zamiast dodawać na koniec
 
@@ -13,10 +13,8 @@ json_plik_path = "NOAA-last-day.json"
 
 with open ("NOAA-last-day.json") as json_plik:
     dane_dotychczasowe_tego_pliku = json.load(json_plik)
-czas_dotychczasowych_pomiarow=[]
-for data_czasowa in dane_dotychczasowe_tego_pliku["dane"]:
-    czas_dotychczasowych_pomiarow.append(data_czasowa[0])
-print(czas_dotychczasowych_pomiarow)
+
+
 #przykladowy output 
 ####print(list_json) 
 ####print("----------")
@@ -57,6 +55,8 @@ pp = pprint.PrettyPrinter(indent=4)
 pp.pprint(list_json_data)
 
 
+
+
 print("-------------")
 #pprint(print(json_plik))
 print("-------------")
@@ -68,35 +68,23 @@ ahoj="["
 #     if a==0:
 #         a=a+1
 #     ahoj.add('"'+element+'"')
-czy_dodano_jakis_rekord=False
-for j in range(0, len(list_json_data), 1):
-    print("------------")
-    print(list_json_data[0][0].strip())
-    print(czas_dotychczasowych_pomiarow)
-    print("------------")
-    #sprawdzam czy ten pomiar już przypadkiem nie jest w jsonie
-    if list_json_data[0][0].strip() not in czas_dotychczasowych_pomiarow:
-        czy_dodano_jakis_rekord=True
-        for i in range(0, len(list_json_data[0]), 1):
-            #print(ahoj)
-            ahoj=ahoj+'"'+list_json_data[0][i].strip()+'"' 
-            if i != len(list_json_data[0])-1:
-                ahoj=ahoj+","
+
+for i in range(0, len(list_json_data[0]), 1):
+    print(ahoj)
+    ahoj=ahoj+'"'+list_json_data[0][i].strip()+'"' 
+    if i != len(list_json_data[0])-1:
         ahoj=ahoj+","
-if czy_dodano_jakis_rekord:
-    #usuwam psujący syntaks przecinek po ostatniej krotce danych
-    ahoj = ahoj[:-1]
-    #print(ahoj)
-    ahoj=ahoj+"]"
-    #print(ahoj)
-    ahoj=ahoj.replace("/n","")
-    #print(ahoj)
-    with open("NOAA-last-day.json", "ab+") as json_plik_do_dodania:
-        json_plik_do_dodania.seek(-2, os.SEEK_END)
-        json_plik_do_dodania.truncate()         # usuwa z pliku trzy ostatnie znaki
-        json_plik_do_dodania.write(b",")
-        json_plik_do_dodania.write(bytes(ahoj,'utf-8'))
-        json_plik_do_dodania.write(b"]}")
-        json_plik_do_dodania.close()
+print(ahoj)
+ahoj=ahoj+"]"
+print(ahoj)
+ahoj=ahoj.replace("/n","")
+print(ahoj)
+with open("NOAA-last-day.json", "ab+") as json_plik_do_dodania:
+    json_plik_do_dodania.seek(-2, os.SEEK_END)
+    json_plik_do_dodania.truncate()         # usuwa z pliku trzy ostatnie znaki
+    json_plik_do_dodania.write(b",")
+    json_plik_do_dodania.write(bytes(ahoj,'utf-8'))
+    json_plik_do_dodania.write(b"]}")
+    json_plik_do_dodania.close()
 
 
