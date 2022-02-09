@@ -43,9 +43,11 @@ with open(csv_plik_path) as csv_plik:
         list_of_value=[]
         for wartosc_str in krotka_danych:
             print("----------")
-            print(wartosc_str.lstrip())
-            print(wartosc_str.lstrip().replace("\n",""))
-            list_of_value.append(wartosc_str.lstrip().replace("\n",""))
+            #print(wartosc_str.lstrip())
+            #print(wartosc_str.lstrip().replace("\n",""))
+            element=wartosc_str.lstrip().replace("/n","")
+            if element != "":
+                list_of_value.append(element)
         list_json_data.append(list_of_value)
 
 #print(list_json_data)
@@ -68,14 +70,17 @@ ahoj="["
 #     ahoj.add('"'+element+'"')
 
 for i in range(0, len(list_json_data[0]), 1):
-    ahoj+'"'+list_json_data[0][i]+'"' 
+    print(ahoj)
+    ahoj=ahoj+'"'+list_json_data[0][i].strip()+'"' 
     if i != len(list_json_data[0])-1:
-        ahoj+","
-    
-ahoj+"]"
-
+        ahoj=ahoj+","
+print(ahoj)
+ahoj=ahoj+"]"
+print(ahoj)
+ahoj=ahoj.replace("/n","")
+print(ahoj)
 with open("NOAA-last-day.json", "ab+") as json_plik_do_dodania:
-    json_plik_do_dodania.seek(-3, os.SEEK_END)
+    json_plik_do_dodania.seek(-2, os.SEEK_END)
     json_plik_do_dodania.truncate()         # usuwa z pliku trzy ostatnie znaki
     json_plik_do_dodania.write(b",")
     json_plik_do_dodania.write(bytes(ahoj,'utf-8'))

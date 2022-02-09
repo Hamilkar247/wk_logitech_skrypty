@@ -30,7 +30,6 @@ with open ("NOAA-wzor.json") as json_plik:
 #
 
 
-data = {}
 with open(csv_plik_path) as csv_plik: 
     for rows in csv_plik:
         print("------")
@@ -40,9 +39,11 @@ with open(csv_plik_path) as csv_plik:
         list_of_value=[]
         for wartosc_str in krotka_danych:
             print("----------")
-            print(wartosc_str.lstrip())
-            print(wartosc_str.lstrip().replace("\n",""))
-            list_of_value.append(wartosc_str.lstrip().replace("\n",""))
+            #print(wartosc_str.lstrip())
+            #print(wartosc_str.lstrip().replace("\n",""))
+            element=wartosc_str.lstrip().replace("/n", "")
+            if element != "":
+                list_of_value.append(element)
         list_json_data['dane'].append(list_of_value)
 
 #print(list_json_data)
