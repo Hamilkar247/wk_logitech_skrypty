@@ -1,3 +1,5 @@
+# - *- coding: utf- 8 - *-
+
 import csv
 import json
 import os
@@ -10,6 +12,12 @@ csv_plik_path = "NOAA-last-day.csv"
 json_plik_path = "NOAA-last-day.json"
 
 
+flag_not_exist_file=False
+if os.path.exists(json_plik_path):
+    flag_not_exist_file=False
+else:
+    flag_not_exist_file=True 
+    open(json_plik_path, 'a').close()
 
 with open ("NOAA-last-day.json") as json_plik:
     dane_dotychczasowe_tego_pliku = json.load(json_plik)
@@ -22,7 +30,7 @@ with open ("NOAA-last-day.json") as json_plik:
 ####print("------------")
 ####print(list_json['dane'][0][0])
 # wyniki
-#{'dane': [['Data', 'Zasieg[%]', 'Temp0[°C]' ...]]}
+#{'data': [['Data', 'Zasieg[%]', 'Temp0[°C]' ...]]}
 #----------
 #['Data', 'Zasieg[%]', 'Temp0[°C]', 'Temp1[°C]' .... ]]}
 #------------

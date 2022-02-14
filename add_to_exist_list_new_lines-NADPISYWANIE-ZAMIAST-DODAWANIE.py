@@ -1,3 +1,5 @@
+# - *- coding: utf- 8 - *-
+
 import csv
 import json
 from os import lseek
@@ -22,7 +24,7 @@ with open ("NOAA-wzor.json") as json_plik:
 ####print("------------")
 ####print(list_json['dane'][0][0])
 # wyniki
-#{'dane': [['Data', 'Zasieg[%]', 'Temp0[°C]' ...]]}
+#{'data': [['Data', 'Zasieg[%]', 'Temp0[°C]' ...]]}
 #----------
 #['Data', 'Zasieg[%]', 'Temp0[°C]', 'Temp1[°C]' .... ]]}
 #------------
