@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# - *- coding: utf- 8 - *-
+import datetime
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -23,4 +26,4 @@ session.login(sender_address, sender_pass) #login with mail_id and password
 text = message.as_string()
 session.sendmail(sender_address, receiver_address, text)
 session.quit()
-print('Mejl wysłany')
+print('Mejl wysłany '+str(datetime.datetime.now()))
