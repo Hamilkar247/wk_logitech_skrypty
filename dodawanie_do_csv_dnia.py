@@ -14,6 +14,14 @@ def generate_md5_via_content(path_to_file):
     hash_md5.update(new_md5_content)
     return hash_md5.hexdigest()
 
+def zastap_stare_md5(path_to_generated_weewx_file):
+    file_md5=path_to_generated_weewx_file+"/"+"day.md5"
+    last_file_path=path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv"
+    new_md5=generate_md5_via_content(last_file_path)
+    with open(file_md5, "w") as file_md5:
+        file_md5.write(new_md5)
+    file_md5.close()
+
 
 def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
     day_md5_last_file="day.md5"
@@ -29,47 +37,58 @@ def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
         print(old_md5)
         print(new_md5)
         if old_md5 != new_md5:
-            with open(day_md5_path, "w") as file_md5:
-                file_md5.write(new_md5)
+            # with open(day_md5_path, "w") as file_md5:
+            #     file_md5.write(new_md5)
             return True
         else:
             return False
     else:
-        hash_md5=generate_md5_via_content(day_md5_path)
+        hash_md5=generate_md5_via_content(last_file_path)
         with open(day_md5_path, "w+") as file_md5:
             file_md5.write(hash_md5)
         file_md5.close()
         return True
-      
 
 
 def main():
+
     print("Per aspera ad astra")
     path_to_generated_weewx_file='/var/www/html/weewx/our_site/NOAA'
-    name_dest_of_file="NOAA-16__02__2022.csv"
+    #fragment os.chdir i powrotem jest by zaspokoić marudnego cron-a
+    os.chdir(path_to_generated_weewx_file)
+    path_to_generated_weewx_file="."
+    #name_dest_of_file="NOAA-16__02__2022.csv"
+    list_name_dest_file=["NOAA_last_day.csv", "NOAA_last_week.csv", "NOAA_last_month.csv", "NOAA_last_year.csv"]
 
     name_source_of_file="NOAA-last-hour.csv"
     name_wzor_file="NOAA-wzor.csv" #w miejscu generowania weewx-a programu jest wzor z chmod 777
     
+
     path_source=path_to_generated_weewx_file+"/"+name_source_of_file
-    path_destination=path_to_generated_weewx_file+"/"+name_dest_of_file
     path_wzor_csv_file=path_to_generated_weewx_file+"/"+name_wzor_file
-    if czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
-        if os.path.exists(path_source):
-            if os.path.exists(path_destination) == False:
-                 shutil.copy2(path_wzor_csv_file, path_destination)
-            with open(path_source) as csv_file:
-                lines = csv_file.readlines()
-            f_dest=open(path_to_generated_weewx_file+"/"+name_dest_of_file,"a") 
-            for line in lines: 
-                f_dest.write(line)
-                f_dest.write("\n")
-            f_dest.close()
-            print("zakonczono dodawanie tekstu do pliku")
-        else: 
-            print("nie ma pliku źródłowego - to po co mnie budzisz koleś?")
-    else:
-        print("ziomek - jeszcze nie ma nowych danych - nic się nie zmieniło")
+    wskazywacz=False
+    for name_dest_of_file in list_name_dest_file:    
+        path_destination=path_to_generated_weewx_file+"/"+name_dest_of_file
+        wskazywacz=czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file)
+        if wskazywacz:
+            if os.path.exists(path_source):
+                if os.path.exists(path_destination) == False:
+
+                    shutil.copy2(path_wzor_csv_file, path_destination)
+                with open(path_source) as csv_file:
+                    lines = csv_file.readlines()
+                f_dest=open(path_to_generated_weewx_file+"/"+name_dest_of_file,"a") 
+                for line in lines: 
+                    f_dest.write(line)
+                    f_dest.write("\n")
+                f_dest.close()
+                print("zakonczono dodawanie tekstu do pliku")
+            else: 
+                print("nie ma pliku źródłowego - to po co mnie budzisz koleś?")
+        else:
+            print("ziomek - jeszcze nie ma nowych danych - nic się nie zmieniło")
+    if wskazywacz:
+        zastap_stare_md5(path_to_generated_weewx_file)
 
 
 if __name__ == "__main__":
