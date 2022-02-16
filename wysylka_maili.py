@@ -4,7 +4,17 @@ import datetime
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-mail_content = '''Testowe wyslanie mejla - wkl
+mail_content = '''
+Aut Caesar aut nihil,
+Hic abundant leones,
+Hic sunt leones,
+Alea iacta est!
+
+English translation:
+Caesar or nothing,
+Here lions abound,
+Here are lions,
+The die is cast!
 '''
 #The mail addresses and password
 #sender_address = 'acegmp@op.pl'
@@ -26,4 +36,4 @@ session.login(sender_address, sender_pass) #login with mail_id and password
 text = message.as_string()
 session.sendmail(sender_address, receiver_address, text)
 session.quit()
-print('Mejl wysłany '+str(datetime.datetime.now()))
+print('Mejl wysłany - Aut Caesar aut nihil! '+str(datetime.datetime.now()))
