@@ -3,7 +3,8 @@
 import os
 import shutil
 import hashlib
-
+import datetime
+import sys
 
 def generate_md5_via_content(path_to_file):
     hash_md5 = hashlib.md5()
@@ -50,9 +51,46 @@ def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
         return True
 
 
+def sprawdzanie_czy_dzien_sie_nieskonczyl(data_i_reszta, path_to_generated_weewx_file):
+    dane=data_i_reszta.split(";")
+    data=dane[0]
+    datetime_pomiaru = datetime.datetime.strptime(data, "%d/%m/%y %H:%M:%S")
+    print(datetime_pomiaru)
+    with open(path_to_generated_weewx_file+"/"+'obecny_dzien.txt', "r") as obecny_dzien_txt:
+        poczatek_i_koniec=obecny_dzien_txt.read().split(";")
+    print(poczatek_i_koniec[0])
+    print(poczatek_i_koniec[1])
+    poczatek_datetime_obiekt = datetime.datetime.strptime(poczatek_i_koniec[0], "%d/%m/%y %H:%M:%S")
+    koniec_datetime_obiekt = datetime.datetime.strptime(poczatek_i_koniec[1], "%d/%m/%y %H:%M:%S")
+    print(poczatek_datetime_obiekt)
+    print(koniec_datetime_obiekt)
+    if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
+        return True
+    elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
+        nowa_nazwa_dla_pliku="NOAA_"+str(datetime_pomiaru.strftime("%Y_%m_%d"))+".csv"
+        os.rename(path_to_generated_weewx_file+"/"+"NOAA_last_day.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
+        shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_day.csv")
+        #dodanie dnia do granic w "obecny dzien"
+        poczatek_datetime_obiekt = poczatek_datetime_obiekt + datetime.timedelta(days=1)
+        koniec_datetime_obiekt = koniec_datetime_obiekt + datetime.timedelta(days=1)
+        print("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
+        #print(poczatek_datetime_obiekt)
+        #print(datetime.datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S"))
+        poczatek_nowego_dnia=datetime.datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+        #print(koniec_datetime_obiekt)
+        #print(datetime.datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S"))
+        koniec_nowego_dnia=datetime.datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+        with open(path_to_generated_weewx_file+"/"+"obecny_dzien.txt", "w") as obecny_dzien_txt:
+            obecny_dzien_txt.write(str(poczatek_nowego_dnia)+";"+str(koniec_nowego_dnia))
+        obecny_dzien_txt.close()
+    else:
+        print("koleś te dane już są starsze niż przewidzieliśmy")
+
+
 def main():
 
     print("Per aspera ad astra")
+
     path_to_generated_weewx_file='/var/www/html/weewx/our_site/NOAA'
     #fragment os.chdir i powrotem jest by zaspokoić marudnego cron-a
     os.chdir(path_to_generated_weewx_file)
@@ -73,14 +111,15 @@ def main():
         if wskazywacz:
             if os.path.exists(path_source):
                 if os.path.exists(path_destination) == False:
-
                     shutil.copy2(path_wzor_csv_file, path_destination)
                 with open(path_source) as csv_file:
                     lines = csv_file.readlines()
+                sprawdzanie_czy_dzien_sie_nieskonczyl(lines[0], path_to_generated_weewx_file)
+                sys.exit()
                 f_dest=open(path_to_generated_weewx_file+"/"+name_dest_of_file,"a") 
                 for line in lines: 
-                    f_dest.write(line)
                     f_dest.write("\n")
+                    f_dest.write(line)
                 f_dest.close()
                 print("zakonczono dodawanie tekstu do pliku")
             else: 
