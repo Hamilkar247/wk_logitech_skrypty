@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # - *- coding: utf- 8 - *-
 import os
 import shutil
@@ -9,11 +9,11 @@ import sys
 
 def generate_md5_via_content(path_to_file):
     hash_md5 = hashlib.md5()
-    with open(path_to_file, "r") as new_file_to_md5:
+    with open(path_to_file, "r", encoding='utf-8') as new_file_to_md5:
         new_md5_content=new_file_to_md5.read()
     new_file_to_md5.close()
     print(new_md5_content)
-    hash_md5.update(new_md5_content)
+    hash_md5.update(new_md5_content.encode("utf-8"))
     return hash_md5.hexdigest()
 
 def zastap_stare_md5(path_to_generated_weewx_file):
@@ -32,7 +32,7 @@ def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
     last_file_path=path_to_generated_weewx_file+"/"+last_file_name
     if os.path.exists(day_md5_path):
         old_md5=""
-        with open(day_md5_path, "r") as old_md5_file:
+        with open(day_md5_path, "r", encoding='utf-8') as old_md5_file:
             old_md5=old_md5_file.read()
         old_md5_file.close()
         new_md5=generate_md5_via_content(last_file_path)
@@ -68,7 +68,7 @@ def sprawdzanie_czy_dzien_sie_skonczyl(data_i_reszta, path_to_generated_weewx_fi
     if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
         return False
     elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
-        nowa_nazwa_dla_pliku="NOAA_"+str(datetime_pomiaru.strftime("%Y_%m_%d"))+".csv"
+        nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m_%d"))+".csv"
         os.rename(path_to_generated_weewx_file+"/"+"NOAA_last_day.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
         shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_day.csv")
         #dodanie dnia do granic w "obecny dzien"
@@ -150,7 +150,7 @@ def sprawdzanie_czy_miesiac_sie_skonczyl(data_i_reszta, path_to_generated_weewx_
     if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
         return False
     elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
-        nowa_nazwa_dla_pliku="NOAA_"+str(datetime_pomiaru.strftime("%Y_%m_%d"))+".csv"
+        nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m_%d"))+".csv"
         os.rename(path_to_generated_weewx_file+"/"+"NOAA_last_month.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
         shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_month.csv")
         #dodanie dnia do granic w "obecny dzien"
@@ -191,7 +191,7 @@ def sprawdzanie_czy_rok_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file
     if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
         return False
     elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
-        nowa_nazwa_dla_pliku="NOAA_"+str(datetime_pomiaru.strftime("%Y_%m_%d"))+".csv"
+        nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m_%d"))+".csv"
         os.rename(path_to_generated_weewx_file+"/"+"NOAA_last_year.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
         shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_year.csv")
         #dodanie dnia do granic w "obecny rok"

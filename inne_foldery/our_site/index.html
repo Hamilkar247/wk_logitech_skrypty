@@ -1,0 +1,497 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head profile="http://www.w3.org/2005/10/profile">
+    <!-- skin for klimalogg - Copyright 2015 Matthew Wall -->
+    <title>Warszawa</title>
+    <style>
+body {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: 10pt;
+  background-color: #ffffff;
+  color: #000000;
+}
+h1 {
+  font-size: 110%;
+}
+h2 {
+  font-size: 100%;
+}
+a:link {
+  text-decoration: none;
+  color: #207070;
+}
+a:hover {
+  text-decoration: none;
+  color: #30a0a0;
+  background-color: #ffffff;
+}
+a:visited {
+  text-decoration: none;
+  color: #207070;
+}
+
+#header {
+  clear: both;
+  margin: 0;
+  padding: 0;
+}
+
+#content {
+  clear: both;
+}
+
+#station_info {
+  float: left;
+  line-height: 95%;
+}
+.station_title {
+  font-size: 120%;
+  font-weight: bold;
+}
+.station_location {
+  font-size: 75%;
+}
+.station_time {
+  font-size: 75%;
+}
+
+.data_graphs {
+}
+.data_table {
+  float: right;
+}
+
+#footer {
+  padding-top: 50px;
+}
+#footer table {
+  font-size: 8pt;
+  font-style: italic;
+  color: #aaaaaa;
+}
+#footer td.label {
+  text-align: right;
+}
+
+.metrics_table {
+  font-size: 80%;
+}
+.metric_name {
+  text-align: right;
+}
+.metric_large {
+  text-align: left;
+  font-weight: bold;
+  font-size: 230%;
+  color: #207070;
+}
+.metric_value {
+  text-align: left;
+  font-weight: bold;
+}
+.metric_units {
+  text-align: left;
+}
+.hilo_time {
+  text-align: left;
+  color: #aaaaaa;
+  font-size: 85%;
+}
+.heatindex {
+  color: #aa4444;
+}
+.heatindex {
+  color: #4444aa;
+}
+.table_heading {
+  font-size: 80%;
+  color: #888888;
+  border-bottom: 1px solid #cccccc;
+}
+
+.navigation {
+  float: right;
+}
+.period {
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  background-color: #ffffff;
+  border: 1px solid #207070;
+  cursor: pointer;
+}
+.period_selected {
+  padding-left: 25px;
+  padding-right: 25px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  background-color: #ffffff;
+  border: 1px solid #207070;
+  cursor: pointer;
+}
+    </style>
+    <script>
+var periods = ['day','week','month','year'];
+function choose(id) {
+  for(var i=0; i<periods.length; i++) {
+    var c = document.getElementById('control_'+periods[i]);
+    if(c) c.className = (periods[i] == id) ? 'period_selected' : 'period';
+    var g = document.getElementById('graphs_'+periods[i]);
+    if(g) g.style.display = (periods[i] == id) ? 'block' : 'none';
+  }
+}
+    </script>
+  </head>
+  <body>
+    <div id='header'>
+      <div id='station_info'>
+        <span class='station_title'>Tomek Tomasz Tomeczek Warszawa</span><br/>
+        <span class='station_time'>21/02/22 16:30:00</span>
+      </div>
+      <div class='navigation'>
+        <div>
+          <a class='period_selected' id='control_hour' onclick="choose('hour')">1hour</a>  
+          <br/>
+          <a class='period_selected' href="./NOAA/NOAA-last-hour.csv">Eksportuj NOAA ostatniego zrobionego rekordu</a>
+        </div>
+        <div>
+          <a class='period_selected' id='control_day' onclick="choose('day')">1Day</a>  
+          <br/>
+          <a class='period_selected' href="./NOAA/NOAA-last-day.csv">1Eksportuj NOAA tego dnia (od p&#243;&#322;nocy) CSV</a>
+        </div>
+        <br/>
+        <div>
+          <a class='period' id='control_week' onclick="choose('week')">Week</a> 
+          <br/>
+          <a class='period' href="./NOAA/NOAA_last_week.csv">Eksportuj NOAA tego tygodnia (od poniedzia&#322;ku) CSV</a>
+          <br/>
+          <a class='period' href="./NOAA/NOAA_tydzien_ktory_juz_minal.csv">Eksportuj NOAA poprzedniego tygodnia CSV</a>
+        </div> 
+        <br/>
+        <div>
+          <a class='period' id='control_month' onclick="choose('month')">Month</a>
+          <br/>
+          <a class='period' href="./NOAA/NOAA_last_month.csv">Eksportuj NOAA tego miesi&#261;ca csv</a>
+        </div>
+        <br/>
+        <div> 
+          <a class='period' id='control_year' onclick="choose('year')">Year</a>
+          <br/>
+          <a class='period' href="./NOAA/NOAA_last_year.csv" >Eksportuj NOAA tego roku csv</a>
+        </div>
+        <br/>
+      </div>
+    </div>
+    <div id='content'>
+      <div class='data_table'>
+<!-- current readings in tabular form -->
+<table class='metrics_table'>
+  <tr>
+    <td></td>
+    <td class='table_heading' colspan="2">ACTUAL</td>
+    <td class='table_heading'>HI/LO</td>
+    <td></td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Temperature KLP</td>
+    <td class='metric_large'>   N/A</td>
+    <td class='metric_value'><span class='dewpoint'>   N/A</span><br/><span class='heatindex'>   N/A</span></td>
+    <td class='metric_value'>
+      25.1<br/>
+      20.5</td>
+    <td class='metric_units'> &#176;C</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class='metric_name'>Humidity KLP</td>
+    <td class='metric_large' colspan='2' >   N/A</td>
+    <td class='metric_value'>
+      61<br/>
+      28</td>
+    <td class='metric_units'> %</td>
+  </tr>
+</table>
+<!-- hi/lo readings in tabular form -->
+<table class='metrics_table'>
+  <tr>
+    <td></td>
+    <td class="table_heading">TODAY</td>
+	<td class="table_heading">WEEK</td>
+    <td class="table_heading">MONTH</td>
+    <td class="table_heading">YEAR</td>
+    <td></td>
+  </tr>
+
+
+
+  <tr style='vertical-align:top'>
+    <td class="metric_name">High Temp KLP:</td>
+    <td><span class="metric_value">25.1</span><br/>
+      <span class="hilo_time">15:23:49</span></td>
+    <td><span class="metric_value">25.1</span><br/>
+      <span class="hilo_time">15:23:49 (Monday)</span></td>
+    <td><span class="metric_value">25.1</span><br/>
+      <span class="hilo_time">21/02/22 15:23:49</span></td>
+    <td><span class="metric_value">38.9</span><br/>
+      <span class="hilo_time">24/01/22 17:30:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class="metric_name">Low Temp KLP:</td>
+    <td><span class="metric_value">20.5</span><br/>
+      <span class="hilo_time">09:47:46</span></td>
+    <td><span class="metric_value">20.0</span><br/>
+      <span class="hilo_time">11:37:32 (Sunday)</span></td>
+    <td><span class="metric_value">12.7</span><br/>
+      <span class="hilo_time">07/02/22 19:25:00</span></td>
+    <td><span class="metric_value">-14.5</span><br/>
+      <span class="hilo_time">23/01/22 03:30:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+
+
+
+  <tr style='vertical-align:top'>
+    <td class="metric_name">High Temp Sensor 1:</td>
+    <td><span class="metric_value">21.3</span><br/>
+      <span class="hilo_time">12:44:31</span></td>
+    <td><span class="metric_value">21.3</span><br/>
+      <span class="hilo_time">12:44:31 (Monday)</span></td>
+    <td><span class="metric_value">22.3</span><br/>
+      <span class="hilo_time">04/02/22 16:14:30</span></td>
+    <td><span class="metric_value">39.3</span><br/>
+      <span class="hilo_time">24/01/22 17:10:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class="metric_name">Low Temp Sensor 1:</td>
+    <td><span class="metric_value">1.0</span><br/>
+      <span class="hilo_time">13:26:02</span></td>
+    <td><span class="metric_value">1.0</span><br/>
+      <span class="hilo_time">13:26:02 (Monday)</span></td>
+    <td><span class="metric_value">1.0</span><br/>
+      <span class="hilo_time">21/02/22 13:26:02</span></td>
+    <td><span class="metric_value">-15.8</span><br/>
+      <span class="hilo_time">23/01/22 05:40:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+
+
+
+  <tr style='vertical-align:top'>
+    <td class="metric_name">High Temp Sensor 2:</td>
+    <td><span class="metric_value">-25.4</span><br/>
+      <span class="hilo_time">11:26:16</span></td>
+    <td><span class="metric_value">-25.4</span><br/>
+      <span class="hilo_time">11:26:16 (Monday)</span></td>
+    <td><span class="metric_value">-22.1</span><br/>
+      <span class="hilo_time">01/02/22 11:36:31</span></td>
+    <td><span class="metric_value">39.1</span><br/>
+      <span class="hilo_time">24/01/22 17:10:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class="metric_name">Low Temp Sensor 2:</td>
+    <td><span class="metric_value">-26.4</span><br/>
+      <span class="hilo_time">09:23:23</span></td>
+    <td><span class="metric_value">-26.4</span><br/>
+      <span class="hilo_time">09:23:23 (Monday)</span></td>
+    <td><span class="metric_value">-26.4</span><br/>
+      <span class="hilo_time">18/02/22 10:16:05</span></td>
+    <td><span class="metric_value">-27.5</span><br/>
+      <span class="hilo_time">26/01/22 17:28:53</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+
+
+
+  <tr style='vertical-align:top'>
+    <td class="metric_name">High Temp Sensor 3:</td>
+    <td><span class="metric_value">18.8</span><br/>
+      <span class="hilo_time">13:46:56</span></td>
+    <td><span class="metric_value">18.8</span><br/>
+      <span class="hilo_time">13:46:56 (Monday)</span></td>
+    <td><span class="metric_value">23.1</span><br/>
+      <span class="hilo_time">17/02/22 12:33:20</span></td>
+    <td><span class="metric_value">39.5</span><br/>
+      <span class="hilo_time">24/01/22 17:00:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class="metric_name">Low Temp Sensor 3:</td>
+    <td><span class="metric_value">17.6</span><br/>
+      <span class="hilo_time">08:35:00</span></td>
+    <td><span class="metric_value">17.6</span><br/>
+      <span class="hilo_time">08:35:00 (Monday)</span></td>
+    <td><span class="metric_value">17.6</span><br/>
+      <span class="hilo_time">21/02/22 08:35:00</span></td>
+    <td><span class="metric_value">-16.0</span><br/>
+      <span class="hilo_time">23/01/22 06:45:00</span></td>
+    <td class="metric_units"> &#176;C</td>
+  </tr>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <tr style='vertical-align:top'>
+    <td class="metric_name">High Humidity KLP:</td>
+    <td><span class="metric_value">61</span><br/>
+      <span class="hilo_time">15:21:45</span></td>
+    <td><span class="metric_value">61</span><br/>
+      <span class="hilo_time">15:21:45 (Monday)</span></td>
+    <td><span class="metric_value">70</span><br/>
+      <span class="hilo_time">16/02/22 12:27:31</span></td>
+    <td><span class="metric_value">70</span><br/>
+      <span class="hilo_time">16/02/22 12:27:31</span></td>
+    <td class="metric_units"> %</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class="metric_name">Low Humidity KLP:</td>
+    <td><span class="metric_value">28</span><br/>
+      <span class="hilo_time">15:26:45</span></td>
+    <td><span class="metric_value">23</span><br/>
+      <span class="hilo_time">11:12:29 (Sunday)</span></td>
+    <td><span class="metric_value">23</span><br/>
+      <span class="hilo_time">01/02/22 06:40:46</span></td>
+    <td><span class="metric_value">12</span><br/>
+      <span class="hilo_time">24/01/22 17:45:00</span></td>
+    <td class="metric_units"> %</td>
+  </tr>
+
+
+
+
+
+
+
+
+
+  <tr style='vertical-align:top'>
+    <td class="metric_name">High Humidity Sensor 3:</td>
+    <td><span class="metric_value">44</span><br/>
+      <span class="hilo_time">09:22:56</span></td>
+    <td><span class="metric_value">44</span><br/>
+      <span class="hilo_time">09:22:56 (Monday)</span></td>
+    <td><span class="metric_value">44</span><br/>
+      <span class="hilo_time">21/02/22 09:22:56</span></td>
+    <td><span class="metric_value">44</span><br/>
+      <span class="hilo_time">21/02/22 09:22:56</span></td>
+    <td class="metric_units"> %</td>
+  </tr>
+  <tr style='vertical-align:top'>
+    <td class="metric_name">Low Humidity Sensor 3:</td>
+    <td><span class="metric_value">37</span><br/>
+      <span class="hilo_time">15:14:57</span></td>
+    <td><span class="metric_value">37</span><br/>
+      <span class="hilo_time">15:14:57 (Monday)</span></td>
+    <td><span class="metric_value">22</span><br/>
+      <span class="hilo_time">14/02/22 10:50:07</span></td>
+    <td><span class="metric_value">22</span><br/>
+      <span class="hilo_time">14/02/22 10:50:07</span></td>
+    <td class="metric_units"> %</td>
+  </tr>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</table>
+<div id='footer'>
+  <table>
+    <tr><td class='label'>altitude:</td>
+      <td>112 meters</td></tr>
+    <tr><td class='label'>location:</td>
+      <td>52&deg; 13.51' N, 020&deg; 59.79' E</td></tr>
+    <tr><td class='label'>station:</td>
+      <td>TFA KlimaLogg Pro</td></tr>
+    <tr><td class='label'>server:</td>
+      <td>0 days, 7 hours, 57 minutes</td></tr>
+    <tr><td class='label'>weewx:</td>
+      <td>0 days, 10 hours, 58 minutes</td></tr>
+    <tr><td></td>
+      <td>4.5.1</td></tr>
+  </table>
+</div>
+      </div>
+      <div id='graphs_day' class='data_graphs'>
+        <img src="daytemp_a.png" alt="temperatures-a" />
+        <img src="daytemp_b.png" alt="temperatures-b" />
+        <img src="dayhumidity_a.png" alt="humidity-a" />
+        <img src="dayhumidity_b.png" alt="humidity-b" />
+        <img src="daydewpoint_a.png" alt="dewpoint-a" />
+        <img src="daydewpoint_b.png" alt="dewpoint-b" />
+        <img src="dayheatindex_a.png" alt="heatindex-a" />
+        <img src="dayheatindex_b.png" alt="heatindex-b" />
+        <img src="daybatterystatus_a.png" alt="batterystatus-a" />
+        <img src="daybatterystatus_b.png" alt="batterystatus-b" />
+        <img src="dayrx.png" alt="rx" />
+      </div>
+      <div id='graphs_week' class='data_graphs' style='display:none'>
+        <img src="weektemp_a.png" alt="temperatures-a" />
+        <img src="weektemp_b.png" alt="temperatures-b" />
+        <img src="weekhumidity_a.png" alt="humidity-a" />
+        <img src="weekhumidity_b.png" alt="humidity-b" />
+        <img src="weekdewpoint_a.png" alt="dewpoint-a" />
+        <img src="weekdewpoint_b.png" alt="dewpoint-b" />
+        <img src="weekheatindex_a.png" alt="heatindex-a" />
+        <img src="weekheatindex_b.png" alt="heatindex-b" />
+        <img src="weekbatterystatus_a.png" alt="batterystatus-a" />
+        <img src="weekbatterystatus_b.png" alt="batterystatus-b" />
+        <img src="weekrx.png" alt="rx" />
+      </div>
+      <div id='graphs_month' class='data_graphs' style='display:none'>
+        <img src="monthtemp_a.png" alt="temperatures-a" />
+        <img src="monthtemp_b.png" alt="temperatures-b" />
+        <img src="monthhumidity_a.png" alt="humidity-a" />
+        <img src="monthhumidity_b.png" alt="humidity-b" />
+        <img src="monthdewpoint_a.png" alt="dewpoint-a" />
+        <img src="monthdewpoint_b.png" alt="dewpoint-b" />
+        <img src="monthheatindex_a.png" alt="heatindex-a" />
+        <img src="monthheatindex_b.png" alt="heatindex-b" />
+        <img src="monthbatterystatus_a.png" alt="batterystatus-a" />
+        <img src="monthbatterystatus_b.png" alt="batterystatus-b" />
+        <img src="monthrx.png" alt="rx" />
+      </div>
+      <div id='graphs_year' class='data_graphs' style='display:none'>
+        <img src="yeartemp_a.png" alt="temperatures-a" />
+        <img src="yeartemp_b.png" alt="temperatures-b" />
+        <img src="yearhumidity_a.png" alt="humidity-a" />
+        <img src="yearhumidity_b.png" alt="humidity-b" />
+        <img src="yeardewpoint_a.png" alt="dewpoint-a" />
+        <img src="yeardewpoint_b.png" alt="dewpoint-b" />
+        <img src="yearheatindex_a.png" alt="heatindex-a" />
+        <img src="yearheatindex_b.png" alt="heatindex-b" />
+        <img src="yearbatterystatus_a.png" alt="batterystatus-a" />
+        <img src="yearbatterystatus_b.png" alt="batterystatus-b" />
+        <img src="yearrx.png" alt="rx" />
+      </div>
+    </div>
+  </body>
+</html>
