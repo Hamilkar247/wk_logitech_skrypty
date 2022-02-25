@@ -5,7 +5,13 @@ import shutil
 import hashlib
 import datetime
 import sys
+import logging
 
+def przerwij_i_wyswietl_czas():
+    now = datetime.now()
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time)
+    sys.exit()
 
 def generate_md5_via_content(path_to_file):
     hash_md5 = hashlib.md5()
@@ -23,7 +29,6 @@ def zastap_stare_md5(path_to_generated_weewx_file):
     with open(file_md5, "w") as file_md5:
         file_md5.write(new_md5)
     file_md5.close()
-
 
 def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
     day_md5_last_file="day.md5"
@@ -50,7 +55,6 @@ def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
             file_md5.write(hash_md5)
         file_md5.close()
         return True
-
 
 def sprawdzanie_czy_dzien_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file):
     dane=data_i_reszta.split(";")
@@ -88,7 +92,6 @@ def sprawdzanie_czy_dzien_sie_skonczyl(data_i_reszta, path_to_generated_weewx_fi
         print("koleś te dane już są starsze niż przewidzieliśmy")
         return False
 
-
 def sprawdzanie_czy_tydzien_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file):
     dane=data_i_reszta.split(";")
     data=dane[0]
@@ -124,19 +127,16 @@ def sprawdzanie_czy_tydzien_sie_skonczyl(data_i_reszta, path_to_generated_weewx_
         print("koleś te dane już są starsze niż przewidzieliśmy")
         return False
 
-
 def pierwszy_dzien_kolejnego_miesiaca(poczatek_datetime_obiekt):
     if poczatek_datetime_obiekt.month == 12:
         return poczatek_datetime_obiekt.replace(year=poczatek_datetime_obiekt.year+1, month=1, day=1)
     return poczatek_datetime_obiekt.replace(month=poczatek_datetime_obiekt.month+1, day=1)
-
 
 def ostatni_dzien_kolejnego_miesiaca(poczatek_datetime_obiekt):
     if poczatek_datetime_obiekt.month == 12:     # jeśli jest grudzien - biore 1 stycznia - by odjac od niego 1 dzien i uzyskać 31 grudnia
         return poczatek_datetime_obiekt.replace(year=poczatek_datetime_obiekt.year+1, month=1, day=1, hour=23, minute=59, second=59) - datetime.timedelta(days=1) 
     #trik - bierzemy pierwszy dzien KOLEJNEGO miesiaca - i potem odejmujemy od niego jeden dzień     
     return poczatek_datetime_obiekt.replace(month=poczatek_datetime_obiekt.month+1, day=1, hour=23, minute=59, second=59) - datetime.timedelta(days=1)
-
 
 def sprawdzanie_czy_miesiac_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file):
     dane=data_i_reszta.split(";")
@@ -170,14 +170,11 @@ def sprawdzanie_czy_miesiac_sie_skonczyl(data_i_reszta, path_to_generated_weewx_
         print("koleś te dane już są starsze niż przewidzieliśmy dla tego raportu")
         return False
 
-
 def pierwszy_dzien_kolejnego_roku(poczatek_datetime_obiekt):
     return poczatek_datetime_obiekt.replace(year=poczatek_datetime_obiekt.year+1, month=1, day=1)
 
-
 def ostatni_dzien_kolejnego_roku(poczatek_datetime_obiekt):
     return poczatek_datetime_obiekt.replace(year=poczatek_datetime_obiekt.year+1, month=12, day=31, hour=23, minute=59, second=59)
-
 
 def sprawdzanie_czy_rok_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file):
     dane=data_i_reszta.split(";")
@@ -210,15 +207,14 @@ def sprawdzanie_czy_rok_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file
         print("koleś te dane już są starsze niż przewidzieliśmy dla tego raportu")
         return False
 
-
-
 def main():
 
     print("Per aspera ad astra")
-    path_to_generated_weewx_file='/var/www/html/weewx/our_site/NOAA'
+    path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/config/csv/NOAA'
+    path_to_media='/var/www/html/weewx/lightlog_sensors/media/config/csv/NOAA'
     #fragment os.chdir i powrotem jest by zaspokoić marudnego cron-a
     os.chdir(path_to_generated_weewx_file)
-    path_to_generated_weewx_file="."
+    path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/config/csv/NOAA'
     #name_dest_of_file="NOAA-16__02__2022.csv"
     list_name_dest_file=["NOAA_last_day.csv", "NOAA_last_week.csv", "NOAA_last_month.csv", "NOAA_last_year.csv"]
 
@@ -261,4 +257,7 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.root.setLevel(logging.DEBUG)
+    logging.debug("wyspa węży")
+    #przerwij_i_wyswietl_czas()
     main()
