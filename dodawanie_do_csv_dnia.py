@@ -3,13 +3,14 @@
 import os
 import shutil
 import hashlib
-import datetime
+from datetime import datetime
 import sys
 import logging
+import traceback
 
 def przerwij_i_wyswietl_czas():
-    now = datetime.now()
-    current_time = now.strftime("%H:%M:%S")
+    czas_teraz = datetime.now()
+    current_time = czas_teraz.strftime("%H:%M:%S")
     print("Current Time =", current_time)
     sys.exit()
 
@@ -31,30 +32,34 @@ def zastap_stare_md5(path_to_generated_weewx_file):
     file_md5.close()
 
 def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(path_to_generated_weewx_file):
-    day_md5_last_file="day.md5"
-    last_file_name="NOAA-last-hour.csv" 
-    day_md5_path=path_to_generated_weewx_file+"/"+day_md5_last_file
-    last_file_path=path_to_generated_weewx_file+"/"+last_file_name
-    if os.path.exists(day_md5_path):
-        old_md5=""
-        with open(day_md5_path, "r", encoding='utf-8') as old_md5_file:
-            old_md5=old_md5_file.read()
-        old_md5_file.close()
-        new_md5=generate_md5_via_content(last_file_path)
-        print(old_md5)
-        print(new_md5)
-        if old_md5 != new_md5:
-            # with open(day_md5_path, "w") as file_md5:
-            #     file_md5.write(new_md5)
-            return True
+    try:
+        day_md5_last_file="day.md5"
+        last_file_name="NOAA-last-hour.csv"
+        day_md5_path=path_to_generated_weewx_file+"/"+day_md5_last_file
+        last_file_path=path_to_generated_weewx_file+"/"+last_file_name
+        if os.path.exists(day_md5_path):
+            old_md5=""
+            with open(day_md5_path, "r", encoding='utf-8') as old_md5_file:
+                old_md5=old_md5_file.read()
+            old_md5_file.close()
+            new_md5=generate_md5_via_content(last_file_path)
+            print(old_md5)
+            print(new_md5)
+            if old_md5 != new_md5:
+                # with open(day_md5_path, "w") as file_md5:
+                #     file_md5.write(new_md5)
+                return True
+            else:
+                return False
         else:
-            return False
-    else:
-        hash_md5=generate_md5_via_content(last_file_path)
-        with open(day_md5_path, "w+") as file_md5:
-            file_md5.write(hash_md5)
-        file_md5.close()
-        return True
+            hash_md5=generate_md5_via_content(last_file_path)
+            with open(day_md5_path, "w+") as file_md5:
+                file_md5.write(hash_md5)
+            file_md5.close()
+            return True
+    except FileNotFoundError as e:
+        print(traceback.print_exc())
+        
 
 def sprawdzanie_czy_dzien_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file):
     dane=data_i_reszta.split(";")
@@ -210,10 +215,15 @@ def sprawdzanie_czy_rok_sie_skonczyl(data_i_reszta, path_to_generated_weewx_file
 def main():
 
     print("Per aspera ad astra")
-    path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/config/csv/NOAA'
-    path_to_media='/var/www/html/weewx/lightlog_sensors/media/config/csv/NOAA'
+    path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/csv/NOAA'
+    path_to_media='/var/www/html/weewx/lightlog_sensors/media/csv/NOAA'
     #fragment os.chdir i powrotem jest by zaspokoić marudnego cron-a
-    os.chdir(path_to_generated_weewx_file)
+
+    if os.path.isdir(path_to_generated_weewx_file):
+        print("znaleziono folder")
+        os.chdir(path_to_generated_weewx_file)
+    else:
+        print("nie ma jak znalezc tego folderu")
     path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/config/csv/NOAA'
     #name_dest_of_file="NOAA-16__02__2022.csv"
     list_name_dest_file=["NOAA_last_day.csv", "NOAA_last_week.csv", "NOAA_last_month.csv", "NOAA_last_year.csv"]
