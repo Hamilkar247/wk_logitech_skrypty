@@ -9,10 +9,13 @@ import sys
 import traceback
 from datetime import datetime
 
-def przerwij_i_wyswietl_czas():
+def wyswietl_czas():
     now = datetime.now()
     current_time = now.strftime("%H:%M:%S")
     print("Current Time =", current_time)
+
+def przerwij_i_wyswietl_czas():
+    wyswietl_czas()
     sys.exit()
 
 def isfloat(num):
@@ -28,6 +31,14 @@ def isdigit(num):
         return True
     except ValueError:
         return False
+
+def drukuj(obiekt_do_wydruku):
+    try:
+        print(type(obiekt_do_wydruku))
+        print(str(obiekt_do_wydruku))
+    except Exception as e:
+        print(e)
+        print(traceback.print_exc())
 
 class Krotka_Danych(object):
     def __init__(self):
@@ -45,15 +56,6 @@ class Krotka_Danych(object):
             None,
             None            
         ]
-        #self.temp[0]=None
-        #self.temp[1]=None
-        #self.temp[2]=None
-        #self.temp[3]=None
-        #self.temp[4]=None
-        #self.temp[5]=None
-        #self.temp[6]=None
-        #self.temp[7]=None
-        #self.temp[8]=None
         self.wilg=[
             None,
             None,
@@ -65,15 +67,6 @@ class Krotka_Danych(object):
             None,           
             None            
         ]
-        #self.wilg[0]=None
-        #self.wilg[1]=None
-        #self.wilg[2]=None
-        #self.wilg[3]=None
-        #self.wilg[4]=None
-        #self.wilg[5]=None
-        #self.wilg[6]=None
-        #self.wilg[7]=None
-        #self.wilg[8]=None
         self.bat=[
             None,
             None,
@@ -85,15 +78,6 @@ class Krotka_Danych(object):
             None,
             None
         ]
-        #self.bat[0]=None      
-        #self.bat[1]=None
-        #self.bat[2]=None
-        #self.bat[3]=None
-        #self.bat[4]=None
-        #self.bat[5]=None
-        #self.bat[6]=None
-        #self.bat[7]=None
-        #self.bat[8]=None   
 
 class Przekroczenia(object):
 
@@ -103,9 +87,9 @@ class Przekroczenia(object):
         self.path_to_przekroczenia_raport_csv='/var/www/html/weewx/lightlog_sensors/media/csv/przekroczenia.csv' #/var/www/html/weewx/our_site/przekroczenia'
         self.path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/csv'
         self.path_to_media_frontend='/var/www/html/weewx/lightlog_sensors/media'
-        self.path_to_csv_with_last_record=self.path_to_generated_weewx_file+"/NOAA/"+"NOAA-last-hour copy.csv"
+        self.path_to_csv_with_last_record=self.path_to_generated_weewx_file+"/NOAA/"+"NOAA-last-hour.csv"
 
-        self.config= configparser.ConfigParser()
+        self.config=configparser.ConfigParser()
         #konfiguracja_globalna
         self.path_to_configuration_ini=self.path_to_media_frontend+"/"+"config/configuration.ini"
         self.zmienne_konfiguracyjne_parsowanie()
@@ -115,19 +99,45 @@ class Przekroczenia(object):
         self.config.read(self.path_to_sensors_ini)
         sekcje=self.config.sections()
         print(sekcje)
+        self.wczytanie_ostatniego_rekordu()
+        self.czas_poprz_przekroczenia=''
+        self.wczytaj_czas_ostatniego_przekroczenia()
         #przerwij_i_wyswietl_czas()
-        for sekcja in sekcje:
-            if sekcja != 'configuration':
-                print(sekcja)
-                self.parsowanie_zmiennych(sekcja)
-                #wczytanie csv-ki z ostatnim rekordem
-                self.wczytanie_ostatniego_rekordu()
-                self.badamy_przekroczenia()
-                self.sprawdz_baterie()
+        drukuj(self.czas_poprz_przekroczenia)
+        if self.czas_poprz_przekroczenia != self.krotka_danych.data:  
+            for sekcja in sekcje:
+                if sekcja != 'configuration': #sprawdzam czy to nie sekcja nie zwiazana z czujnikami
+                    print(sekcja)
+                    self.parsowanie_zmiennych(sekcja)
+                    #wczytanie csv-ki z ostatnim rekordem
 
-                self.wyslij_mejla()
-                self.wyslij_smsa()
-                self.wyczyszczenie_zmiennych_konfiguracyjnych_czujnika()
+                    self.badamy_przekroczenia()
+                    self.sprawdz_baterie()
+
+                    self.wyslij_mejla()
+                    self.wyslij_smsa()
+                    self.wyczyszczenie_zmiennych_konfiguracyjnych_czujnika()
+            self.nadpisz_czas_ostatniego_zbadanego_przekroczenia()
+        else:
+            print("nie ma nowego rekordu do sprawdzenia")
+        
+    def wczytaj_czas_ostatniego_przekroczenia(self):
+        print("BAJRAKTAR")
+        path_czas_ostatnie_przekroczenie=self.path_to_generated_weewx_file+"/"+"czas_ostatniego_przekroczenia.txt"
+        if os.path.exists(path_czas_ostatnie_przekroczenie):
+            with open(path_czas_ostatnie_przekroczenie, "r", encoding="utf-8") as plik_z_czas_zbad_rekordu:
+                self.czas_poprz_przekroczenia=plik_z_czas_zbad_rekordu.read()
+        else:
+            with open(path_czas_ostatnie_przekroczenie, 'w') as fp:
+                pass
+                self.czas_poprz_przekroczenia=''
+
+    def nadpisz_czas_ostatniego_zbadanego_przekroczenia(self):
+        print("BAJRAKTAR")
+        path_czas_ostatnie_przekroczenie=self.path_to_generated_weewx_file+"/"+"czas_ostatniego_przekroczenia.txt"
+        if os.path.exists(path_czas_ostatnie_przekroczenie):
+            with open(path_czas_ostatnie_przekroczenie, "w", encoding="utf-8") as plik_z_czas_zbad_rekordu:
+                self.czas_poprz_przekroczenia=plik_z_czas_zbad_rekordu.write(self.krotka_danych.data)
 
     def zmienne_konfiguracyjne_parsowanie(self):
         print("Зродились ми з великої години")
@@ -136,12 +146,12 @@ class Przekroczenia(object):
             self.config.read(self.path_to_configuration_ini)
             configuration='configuration'
             self.telefon_number = self.config.get(configuration, 'telefon_number')
-            self.telefon_frequency = self.config.get(configuration, 'telefon_frequency')
-            self.email_address=self.config.get(configuration, 'email_address')
-            self.email_frequency=self.config.get(configuration, 'email_frequency')
+            self.telefon_frequency_hour = self.config.get(configuration, 'telefon_frequency_hour')
+            self.email_address = self.config.get(configuration, 'email_address')
+            self.email_frequency_hour = self.config.get(configuration, 'email_frequency_hour')
             self.inform_range_disconnected=self.config.getboolean(configuration, 'inform_range_disconnected')
-            self.inform_range_disconnected_frequency=self.config.get(configuration, 'inform_range_disconnected_frequency')
-            self.time_period_to_inform_after_range_disconnected=self.config.get(configuration, 'time_period_to_inform_after_range_disconnected')
+            self.inform_range_disconnected_frequency_hour=self.config.get(configuration, 'inform_range_disconnected_frequency_hour')
+            self.time_period_to_inform_after_range_disconnected_hour=self.config.get(configuration, 'time_period_to_inform_after_range_disconnected_hour')
         except AttributeError as e:
             print(e)
             print(traceback.print_exc())
@@ -303,7 +313,7 @@ class Przekroczenia(object):
                 print("brak ogranicznika temperatury maksymalnej")
         else:
             print("brak danych na temat zmierzonej temperatury")
-            print(self.temp0)
+            print(self.krotka_danych.temp[int(self.sensor_id)])
 
     def czy_przekroczylo_wilgotnosc(self):
         print("plurimos annos - wilgotnosc"),
@@ -329,6 +339,7 @@ class Przekroczenia(object):
                 print("brak ogranicznika wilgotnosci maksymalnej") 
         else:
             print("brak danych na temat zmierzonej wilgotności")
+            print(self.krotka_danych.wilg[int(self.sensor_id)])
 
     def wyslij_mejla(self):
         pass
@@ -338,7 +349,8 @@ class Przekroczenia(object):
     
 
 if __name__ == "__main__":
-
+    print("_--------PRZEKROCZENIE--------------------------------_")
+    wyswietl_czas()
     #inicjalizacja
     przekroczenia=Przekroczenia()
 
