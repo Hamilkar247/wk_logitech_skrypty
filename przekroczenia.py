@@ -8,6 +8,7 @@ import logging
 import sys
 import traceback
 from datetime import datetime
+import shutil
 
 def wyswietl_czas():
     now = datetime.now()
@@ -32,17 +33,24 @@ def isdigit(num):
     except ValueError:
         return False
 
+def nazwa_programu():
+    return "przekroczenie.py"
+
+def data_i_godzina():
+    now = datetime.now()
+    current_time = now.strftime("%D %H:%M:%S")
+    return current_time
+
 def drukuj(obiekt_do_wydruku):
     try:
-        print(type(obiekt_do_wydruku))
-        print(str(obiekt_do_wydruku))
+        print(data_i_godzina()+" "+nazwa_programu()+" "+str(obiekt_do_wydruku))
     except Exception as e:
         print(e)
         print(traceback.print_exc())
 
 class Krotka_Danych(object):
     def __init__(self):
-        print("krotka_danych")
+        drukuj("krotka_danych")
         self.data=None
         self.zasieg=None
         self.temp=[
@@ -82,7 +90,7 @@ class Krotka_Danych(object):
 class Przekroczenia(object):
 
     def __init__(self):
-        print("przekroczenia")
+        drukuj("przekroczenia - init")
         #ścieszki przejścia etc.
         self.path_to_przekroczenia_raport_csv='/var/www/html/weewx/lightlog_sensors/media/csv/przekroczenia.csv' #/var/www/html/weewx/our_site/przekroczenia'
         self.path_to_generated_weewx_file='/var/www/html/weewx/lightlog_sensors/media/csv'
@@ -98,7 +106,7 @@ class Przekroczenia(object):
         self.path_to_sensors_ini=self.path_to_media_frontend+"/"+'config/sensors.ini'
         self.config.read(self.path_to_sensors_ini)
         sekcje=self.config.sections()
-        print(sekcje)
+        drukuj(sekcje)
         self.wczytanie_ostatniego_rekordu()
         self.czas_poprz_przekroczenia=''
         self.wczytaj_czas_ostatniego_przekroczenia()
@@ -107,8 +115,8 @@ class Przekroczenia(object):
         if self.czas_poprz_przekroczenia != self.krotka_danych.data:  
             for sekcja in sekcje:
                 if sekcja != 'configuration': #sprawdzam czy to nie sekcja nie zwiazana z czujnikami
-                    print(sekcja)
-                    self.parsowanie_zmiennych(sekcja)
+                    drukuj(sekcja)
+                    self.parsowanie_zmiennych_sensorowych(sekcja)
                     #wczytanie csv-ki z ostatnim rekordem
 
                     self.badamy_przekroczenia()
@@ -117,12 +125,12 @@ class Przekroczenia(object):
                     self.wyslij_mejla()
                     self.wyslij_smsa()
                     self.wyczyszczenie_zmiennych_konfiguracyjnych_czujnika()
-            self.nadpisz_czas_ostatniego_zbadanego_przekroczenia()
+            self.nadpisz_czas_ostatniego_zbadanego_przekroczenia() #ODKOMENTOWANIE PRZY TESTACH - ZAKOMENTOWANIE PRZY PRODUKCJI
         else:
-            print("nie ma nowego rekordu do sprawdzenia")
+            drukuj("nie ma nowego rekordu do sprawdzenia")
         
     def wczytaj_czas_ostatniego_przekroczenia(self):
-        print("BAJRAKTAR")
+        drukuj("wczytaj_czas_ostatniego_przekroczenia")
         path_czas_ostatnie_przekroczenie=self.path_to_generated_weewx_file+"/"+"czas_ostatniego_przekroczenia.txt"
         if os.path.exists(path_czas_ostatnie_przekroczenie):
             with open(path_czas_ostatnie_przekroczenie, "r", encoding="utf-8") as plik_z_czas_zbad_rekordu:
@@ -133,15 +141,14 @@ class Przekroczenia(object):
                 self.czas_poprz_przekroczenia=''
 
     def nadpisz_czas_ostatniego_zbadanego_przekroczenia(self):
-        print("BAJRAKTAR")
+        drukuj("nadpisz_czas_ostatniego_zbadanego_przekroczenia")
         path_czas_ostatnie_przekroczenie=self.path_to_generated_weewx_file+"/"+"czas_ostatniego_przekroczenia.txt"
         if os.path.exists(path_czas_ostatnie_przekroczenie):
             with open(path_czas_ostatnie_przekroczenie, "w", encoding="utf-8") as plik_z_czas_zbad_rekordu:
                 self.czas_poprz_przekroczenia=plik_z_czas_zbad_rekordu.write(self.krotka_danych.data)
 
     def zmienne_konfiguracyjne_parsowanie(self):
-        print("Зродились ми з великої години")
-        print("parsowanie_zmienny configuration.ini")
+        drukuj("parsowanie_zmiennych_konfiguracyjnych configuration.ini")
         try:
             self.config.read(self.path_to_configuration_ini)
             configuration='configuration'
@@ -153,15 +160,16 @@ class Przekroczenia(object):
             self.inform_range_disconnected_frequency_hour=self.config.get(configuration, 'inform_range_disconnected_frequency_hour')
             self.time_period_to_inform_after_range_disconnected_hour=self.config.get(configuration, 'time_period_to_inform_after_range_disconnected_hour')
         except AttributeError as e:
+            drukuj("AttributeError - błąd")
             print(e)
             print(traceback.print_exc())
         except Exception as e:
-            print("wystapil blad przy parsowaniu zmiennych z configuration.ini")
+            drukuj("wystapil blad przy parsowaniu zmiennych z configuration.ini")
             print(e)
             print(traceback.print_exc())
 
-    def parsowanie_zmiennych(self, sekcja):
-        print("Aeterna Victrix!")
+    def parsowanie_zmiennych_sensorowych(self, sekcja):
+        drukuj("parsowanie_zmiennych_sensorowych sensors.ini")
         try:
             #parsowanie zmiennych istniejącego pliku
             self.nazwa_czujnika=sekcja
@@ -182,12 +190,13 @@ class Przekroczenia(object):
             self.powiadomienie_sms = self.config.getboolean(self.nazwa_czujnika, 'powiadomienie_sms')
             self.powiadomienie_email = self.config.getboolean(self.nazwa_czujnika, 'powiadomienie_email')
         except Exception as e:
-            print("wystapil błądd przy parsowaniu zmiennych")
+            drukuj("wystapił błąd przy parsowaniu zmiennych")
+            print(e)
             print(traceback.print_exc())
-        print(self.nazwa_czujnika)
+        drukuj(self.nazwa_czujnika)
 
     def wyczyszczenie_zmiennych_konfiguracyjnych_czujnika(self):
-        print("Aeterna Victrix!")
+        drukuj("wyczyszczenie_zmiennych_konfiguracyjnych_czujnika")
         config = configparser.ConfigParser()
         try:
             #parsowanie zmiennych istniejącego pliku
@@ -210,9 +219,9 @@ class Przekroczenia(object):
             self.powiadomienie_sms = None
             self.powiadomienie_email = None
         except Exception as e:
-            print("wystapil blad przy parsowaniu zmiennych czujnika w sensors.ini")
+            drukuj("wystapil blad przy parsowaniu zmiennych czujnika w sensors.ini")
             print(traceback.print_exc())
-        print(self.nazwa_czujnika)
+        drukuj(self.nazwa_czujnika)
 
     def transformacja(self, value_str):
         value_str=value_str.split(" " , 1)[0].replace(",",".")
@@ -223,12 +232,16 @@ class Przekroczenia(object):
     
 
     def wczytanie_ostatniego_rekordu(self):
+        drukuj("wczytanie_ostatniego_rekordu")
         with open(self.path_to_csv_with_last_record, "r", encoding="utf-8") as csv_file_last_record:
-            krotka = csv_file_last_record.read().split(';')
+            linia = csv_file_last_record.read()
+        csv_file_last_record.close()
+        krotka = linia.split(';')
         #Data;Zasieg[%];Temp0[°C];Temp1[°C];Temp2[°C];Temp3[°C];Temp4[°C];Temp5[°C];Temp6[°C];Temp7[°C];Temp8[°C];Wilgotnosc0[%];Wilgotnosc1[%];Wilgotnosc2[%];Wilgotnosc3[%];Wilgotnosc4[%];Wilgotnosc5[%];Wilgotnosc6[%];Wilgotnosc7[%];Wilgotnosc8[%];Bateria0[%];Bateria1[%];Bateria2[%];Bateria3[%];Bateria4[%];Bateria5[%];Bateria6[%];Bateria7[%];Bateria8[%];
+        drukuj("krotka: "+linia)
         self.krotka_danych=Krotka_Danych()
         self.krotka_danych.data=krotka[0]
-        print(str(self.krotka_danych.data) +" слава")
+        drukuj(str(self.krotka_danych.data) +" data pomiaru")
         self.krotka_danych.zasieg=self.transformacja(krotka[1])
         #self.krotka_danych.temp=[]
         self.krotka_danych.temp[0]=self.transformacja(krotka[2])
@@ -259,24 +272,45 @@ class Przekroczenia(object):
         self.krotka_danych.bat[5]=self.transformacja(krotka[25])
         self.krotka_danych.bat[6]=self.transformacja(krotka[26])
         self.krotka_danych.bat[7]=self.transformacja(krotka[27])
-        self.krotka_danych.bat[8]=self.transformacja(krotka[28])        
+        self.krotka_danych.bat[8]=self.transformacja(krotka[28]) 
+        
+        drukuj("temp0 "+str(self.krotka_danych.temp[0]))       
+        drukuj("wilg0 "+str(self.krotka_danych.wilg[0]))       
 
     def badamy_przekroczenia(self):
+        drukuj("badamy_przekroczenia")
         self.czy_przekroczylo_temperature()
         self.czy_przekroczylo_wilgotnosc()
 
+    def uaktualnij_plik_roboczy_csv_przekroczen(self):
+        drukuj("uaktualnij_plik_roboczy_csv_przekroczen")
+        if (os.path.isfile(self.path_to_przekroczenia_raport_csv)):
+            shutil.copy2(self.path_to_przekroczenia_raport_csv, self.path_to_przekroczenia_raport_csv+".work")
+        else:
+            drukuj("nie znaleziono pod ścieszką "+ self.path_to_przekroczenia_raport_csv)
+     
+    def uaktualnij_plik_csv_przekroczen(self):
+        drukuj("uaktualnij_plik_csv_przekroczen")
+        if (os.path.isfile(self.path_to_przekroczenia_raport_csv+".work")):
+            shutil.copy2(self.path_to_przekroczenia_raport_csv+".work", self.path_to_przekroczenia_raport_csv)
+        else:
+            drukuj("nie znaleziono pod ścieszką "+ self.path_to_przekroczenia_raport_csv+".work")
+     
     def wpis_do_przekroczen(self, wpis, typ): #, typ, wartosc_z_jednostka):
+        drukuj("wpis_do_przekroczen")
         #Id;Nazwa;Data;Typ;Min;Max;Wartość; - jak wygląda zapis
-        print(wpis)
-        with open(self.path_to_przekroczenia_raport_csv, "a", encoding="utf-8") as plik_do_przekroczen:
+        drukuj(wpis)
+        self.uaktualnij_plik_roboczy_csv_przekroczen()
+        with open(self.path_to_przekroczenia_raport_csv+".work", "a", encoding="utf-8") as plik_do_przekroczen:
             plik_do_przekroczen.write(wpis+"\n")
         plik_do_przekroczen.close()
-        print("Dodano przekroczenie typu "+typ)
+        self.uaktualnij_plik_csv_przekroczen()
+        drukuj("Dodano przekroczenie typu "+typ)
 
     def sprawdz_baterie(self):
-        print("kyiv not kiev - padająca bateria")
+        drukuj("sprawdz_baterie")
         wartosc_baterii=self.krotka_danych.bat[int(self.sensor_id)]
-        print(wartosc_baterii)
+        drukuj(wartosc_baterii)
         if isdigit(wartosc_baterii):
             if int(wartosc_baterii) == 1:
                 #Id;Nazwa;Data;Typ;Min;Max;Wartość; - jak wygląda zapis
@@ -284,73 +318,74 @@ class Przekroczenia(object):
                 wpis=str(self.sensor_id)+";"+str(self.sensor_name)+";"+str(self.krotka_danych.data)+";"+str(typ)+";"+"-"+";"+"-"+";"+str(wartosc_baterii)+";"
                 self.wpis_do_przekroczen(wpis=wpis, typ=typ)
             else:
-                print("brak sygnału o niskim poziomie baterii")
+                drukuj("brak sygnału o niskim poziomie baterii")
         else:
-            print("N\A " + wartosc_baterii)
-            print("nie ma alarmu o słabej baterii "+wartosc_baterii)
+            drukuj("N\A " + wartosc_baterii)
+            drukuj("nie ma alarmu o słabej baterii "+wartosc_baterii)
 
 
     def czy_przekroczylo_temperature(self):
-        print("plurimos annos - temperatura")
+        drukuj("czy_przekroczylo_temperature")
         wartosc_temperatury=self.krotka_danych.temp[int(self.sensor_id)]
         typ="Temperatura"
         if isfloat(wartosc_temperatury):
             wartosc_z_jednostka=str(wartosc_temperatury)+" °C"
             if isfloat(self.temp_min_stopnie_celsjusza):
                 if float(wartosc_temperatury) < float(self.temp_min_stopnie_celsjusza):
-                    print("przekroczenie - za niska temperatura")
+                    drukuj("przekroczenie - za niska temperatura")
                     #Id;Nazwa;Data;Typ;Min;Max;Wartość; - jak wygląda krotka
                     wpis=str(self.sensor_id)+";"+str(self.sensor_name)+";"+str(self.krotka_danych.data)+";"+str(typ)+";"+str(self.temp_min_stopnie_celsjusza)+";"+str(self.temp_max_stopnie_celsjusza)+";"+wartosc_z_jednostka+";"
                     self.wpis_do_przekroczen(wpis=wpis, typ=typ)
             else:
-                print("brak ogranicznika temperatury minimalnej")
+                drukuj("brak ogranicznika temperatury minimalnej")
             if isfloat(self.temp_max_stopnie_celsjusza):
                 if float(wartosc_temperatury) > float(self.temp_max_stopnie_celsjusza):
-                    print("przekroczenie - za wysoka temperatura")
+                    drukuj("przekroczenie - za wysoka temperatura")
                     wpis=str(self.sensor_id)+";"+str(self.sensor_name)+";"+str(self.krotka_danych.data)+";"+str(typ)+";"+str(self.temp_min_stopnie_celsjusza)+";"+str(self.temp_max_stopnie_celsjusza)+";"+wartosc_z_jednostka+";"
                     self.wpis_do_przekroczen(wpis=wpis, typ=typ)
             else:
-                print("brak ogranicznika temperatury maksymalnej")
+                drukuj("brak ogranicznika temperatury maksymalnej")
         else:
-            print("brak danych na temat zmierzonej temperatury")
-            print(self.krotka_danych.temp[int(self.sensor_id)])
+            drukuj("brak danych na temat zmierzonej temperatury")
+            drukuj(self.krotka_danych.temp[int(self.sensor_id)])
 
     def czy_przekroczylo_wilgotnosc(self):
-        print("plurimos annos - wilgotnosc"),
+        drukuj("czy_przekroczylo_wilgotnosc"),
         wartosc_wilgotnosc=self.krotka_danych.wilg[int(self.sensor_id)]
         typ="Wilgotność"
         if isfloat(wartosc_wilgotnosc):
             wartosc_z_jednostka=str(wartosc_wilgotnosc)+" %"
             if isfloat(self.wilgotnosc_min_procent):
                 if float(wartosc_wilgotnosc) < float(self.wilgotnosc_min_procent):
-                    print("przekroczenie - za niska wilgotnosc") 
+                    drukuj("przekroczenie - za niska wilgotnosc") 
                     #Id;Nazwa;Data;Typ;Min;Max;Wartość; - jak wygląda krotka
                     wpis=str(self.sensor_id)+";"+str(self.sensor_name)+";"+str(self.krotka_danych.data)+";"+str(typ)+";"+str(self.wilgotnosc_min_procent)+";"+str(self.wilgotnosc_max_procent)+";"+wartosc_z_jednostka+";"
                     self.wpis_do_przekroczen(wpis=wpis, typ=typ)
             else:
-                print("brak ogranicznika wilgotnosci minimalnej")
+                drukuj("brak ogranicznika wilgotnosci minimalnej")
             if isfloat(self.wilgotnosc_max_procent):
                 if float(wartosc_wilgotnosc) > float(self.wilgotnosc_max_procent):
-                    print("przekroczenie - za wysoka wilgotność")
+                    drukuj("przekroczenie - za wysoka wilgotność")
                     #Id;Nazwa;Data;Typ;Min;Max;Wartość; - jak wygląda krotka
                     wpis=str(self.sensor_id)+";"+str(self.sensor_name)+";"+str(self.krotka_danych.data)+";"+str(typ)+";"+str(self.wilgotnosc_min_procent)+";"+str(self.wilgotnosc_max_procent)+";"+wartosc_z_jednostka+";"
                     self.wpis_do_przekroczen(wpis=wpis, typ=typ)
             else:
-                print("brak ogranicznika wilgotnosci maksymalnej") 
+                drukuj("brak ogranicznika wilgotnosci maksymalnej") 
         else:
-            print("brak danych na temat zmierzonej wilgotności")
-            print(self.krotka_danych.wilg[int(self.sensor_id)])
+            drukuj("brak danych na temat zmierzonej wilgotności")
+            drukuj(self.krotka_danych.wilg[int(self.sensor_id)])
 
     def wyslij_mejla(self):
+        drukuj("wyślij_mejla")
         pass
    
     def wyslij_smsa(self):
+        drukuj("wyślij_smsa")
         pass
     
 
 if __name__ == "__main__":
-    print("_--------PRZEKROCZENIE--------------------------------_")
-    wyswietl_czas()
+    drukuj("------PRZEKROCZENIE--------")
     #inicjalizacja
     przekroczenia=Przekroczenia()
 

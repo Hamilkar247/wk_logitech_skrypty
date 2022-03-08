@@ -4,6 +4,24 @@ import datetime
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import traceback
+from datetime import datetime
+
+def nazwa_programu():
+    return "wysylka_maili.py"
+
+def data_i_godzina():
+    now = datetime.now()
+    current_time = now.strftime("%D %H:%M:%S")
+    return current_time
+
+def drukuj(obiekt_do_wydruku):
+    try:
+        print(data_i_godzina()+" "+nazwa_programu()+" "+str(obiekt_do_wydruku))
+    except Exception as e:
+        print(e)
+        print(traceback.print_exc())
+
 mail_content = '''
 Aut Caesar aut nihil,
 Hic abundant leones,
@@ -36,4 +54,4 @@ session.login(sender_address, sender_pass) #login with mail_id and password
 text = message.as_string()
 session.sendmail(sender_address, receiver_address, text)
 session.quit()
-print('Mejl wysłany - Aut Caesar aut nihil! '+str(datetime.datetime.now()))
+drukuj('Mejl wysłany - Aut Caesar aut nihil! '+str(datetime.datetime.now()))
