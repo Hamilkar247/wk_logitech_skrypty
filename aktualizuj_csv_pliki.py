@@ -46,44 +46,68 @@ class AktualizujCsvPliki(object):
         #name_dest_of_file="NOAA-16__02__2022.csv"
         self.list_name_dest_file=["NOAA_this_day.csv", "NOAA_this_week.csv", "NOAA_this_month.csv", "NOAA_this_year.csv"]
 
-        self.name_source_of_file="NOAA-last-hour.csv"
-        self.name_wzor_file="NOAA_wzor.csv" #w miejscu generowania weewx-a programu jest wzor z chmod 777
-    
-        self.path_source=self.path_to_generated_weewx_file+"/"+self.name_source_of_file
-        self.path_wzor_csv_file=self.path_to_generated_weewx_file+"/"+self.name_wzor_file
-        self.wskazywacz=self.czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(self.path_to_generated_weewx_file)
+        self.name_source_of_new_data="NOAA-last-hour.csv"
+        self.wskazywacz=self.czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(self.name_source_of_new_data)
         if self.wskazywacz:
-            for name_dest_of_file in self.list_name_dest_file:
-                self.path_destination=self.path_to_generated_weewx_file+"/"+name_dest_of_file
-                self.wskazywacz=self.czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(self.path_to_generated_weewx_file)
-                if self.wskazywacz:
-                    if os.path.exists(self.path_source):
+            self.przeslanie_nowych_danych_do_obrobki()
+            self.name_wzor_csv_file="NOAA_wzor.csv" #w miejscu generowania weewx-a programu jest wzor z chmod 777
+            self.path_source_file=self.path_to_generated_weewx_file+"/"+"dane_do_dodania.csv"
+            with open(self.path_source_file, "r") as file_records:
+                records = file_records.readlines()
+            file_records.close()
+            with open(self.path_source_file, "w") as file_records:
+                file_records.close()
+            with open("/var/www/html/weewx/lightlog_sensors/media/csv"+"/"+"liczba_zczytanych_rekordow.txt","w") as file_zczytanych_plikow:
+                file_zczytanych_plikow.write('0')
+                file_zczytanych_plikow.close()
+            self.path_wzor_csv_file=self.path_to_generated_weewx_file+"/"+self.name_wzor_csv_file
+        else:
+            drukuj("brak nowych danych")  
+
+        if self.wskazywacz:
+            for record in records:
+                record=record[0:-1] #usuwam znak nowej linii
+                if record != "":
+                    for name_dest_of_file in self.list_name_dest_file:
+                        self.path_destination=self.path_to_generated_weewx_file+"/"+name_dest_of_file
+                        #self.wskazywacz=self.czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(self.path_to_generated_weewx_file)
+                        #if self.wskazywacz:
                         if os.path.exists(self.path_destination) == False:
                             shutil.copy2(self.path_wzor_csv_file, self.path_destination)
-                        with open(self.path_source) as csv_file: #odczytujemy rekordy z pliku 'NOAA-last-hour.csv'
-                            lines = csv_file.readlines()
+                        #with open(self.path_source) as csv_file: #odczytujemy rekordy z pliku 'NOAA-last-hour.csv'
+                        #    lines = csv_file.readlines()
                         if name_dest_of_file == "NOAA_this_day.csv":
-                            self.sprawdzanie_czy_dzien_sie_skonczyl(lines[0], self.path_to_generated_weewx_file)
+                            self.sprawdzanie_czy_dzien_sie_skonczyl(record, self.path_to_generated_weewx_file)
                         elif name_dest_of_file == "NOAA_this_week.csv":
-                            self.sprawdzanie_czy_tydzien_sie_skonczyl(lines[0], self.path_to_generated_weewx_file)
+                            self.sprawdzanie_czy_tydzien_sie_skonczyl(record, self.path_to_generated_weewx_file)
                         if name_dest_of_file == "NOAA_this_month.csv":
-                            self.sprawdzanie_czy_miesiac_sie_skonczyl(lines[0], self.path_to_generated_weewx_file)
+                            self.sprawdzanie_czy_miesiac_sie_skonczyl(record, self.path_to_generated_weewx_file)
                         if name_dest_of_file == "NOAA_this_year.csv":
-                            self.sprawdzanie_czy_rok_sie_skonczyl(lines[0], self.path_to_generated_weewx_file)
+                            self.sprawdzanie_czy_rok_sie_skonczyl(record, self.path_to_generated_weewx_file)
 
                         self.uaktualnij_plik_roboczy_csv(self.path_to_generated_weewx_file+"/"+name_dest_of_file)
                         f_dest=open(self.path_to_generated_weewx_file+"/"+name_dest_of_file,"a") 
-                        for line in lines:
-                            f_dest.write("\n")
-                            f_dest.write(line)
+                        f_dest.write("\n")
+                        f_dest.write(record)
                         f_dest.close()
-                        drukuj("zakonczono dodawanie tekstu do pliku")
-                    else: 
-                        drukuj("nie ma pliku źródłowego - to po co mnie budzisz koleś?")
+                        drukuj("zakonczono dodawanie tekstu do pliku " + name_dest_of_file)
+                    self.zastap_stare_md5(self.path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv", self.path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv"+".md5") #do testow do zakommenntowania - nna produkcji odkomentowac
                 else:
-                    drukuj("ziomek - jeszcze nie ma nowych danych - nic się nie zmieniło")
-            self.zastap_stare_md5(self.path_to_generated_weewx_file)
+                    drukuj(str(record)+ " record równy zero")
  
+    def przeslanie_nowych_danych_do_obrobki(self):
+        path_to_generated_data=self.path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv"
+        with open(path_to_generated_data) as new_records_file:
+            lines = new_records_file.readlines() 
+        new_records_file.close()
+
+        path_to_dane_do_dodania=self.path_to_generated_weewx_file+"/"+"dane_do_dodania.csv"
+        plik_dane_do_dodania=open(path_to_dane_do_dodania,"a")
+        for line in lines:
+            plik_dane_do_dodania.write(line)
+        plik_dane_do_dodania.close()
+
+
     def uaktualnij_plik_roboczy_csv(self, path_to_file_with_namefile):
         if (os.path.isfile(path_to_file_with_namefile)):
             shutil.copy2(path_to_file_with_namefile, path_to_file_with_namefile+".work")
@@ -105,44 +129,49 @@ class AktualizujCsvPliki(object):
         hash_md5.update(new_md5_content.encode("utf-8"))
         return hash_md5.hexdigest()
     
-    def zastap_stare_md5(self, path_to_generated_weewx_file):
-        file_md5=self.path_to_generated_weewx_file+"/"+"day.md5"
-        last_file_path=self.path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv"
-        new_md5=self.generate_md5_via_content(last_file_path)
-        with open(file_md5, "w") as file_md5:
+    def zastap_stare_md5(self, file_path, md5_file_path):
+        #file_md5=self.path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv.md5"
+        #last_file_path=self.path_to_generated_weewx_file+"/"+"NOAA-last-hour.csv"
+        new_md5=self.generate_md5_via_content(file_path)
+        with open(md5_file_path, "w") as file_md5:
             file_md5.write(new_md5)
         file_md5.close()
     
-    def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(self, path_to_generated_weewx_file):
+    def czy_md5_wskazuje_nowe_dane_oto_jest_pytanie(self, name_file_to_generate_md5):
         try:
-            day_md5_last_file="day.md5"
-            last_file_name="NOAA-last-hour.csv"
-            day_md5_path=self.path_to_generated_weewx_file+"/"+day_md5_last_file
-            last_file_path=self.path_to_generated_weewx_file+"/"+last_file_name
-            if os.path.exists(day_md5_path):
+            #"NOAA-last-hour.csv"
+            file_name_with_records_md5=name_file_to_generate_md5+".md5"
+            file_name_with_records=name_file_to_generate_md5
+            md5_file_path=self.path_to_generated_weewx_file+"/"+file_name_with_records_md5
+            file_path=self.path_to_generated_weewx_file+"/"+file_name_with_records
+            drukuj(str(os.path.exists(md5_file_path))+" md5_file_path")
+            if os.path.exists(md5_file_path):
                 old_md5=""
-                with open(day_md5_path, "r", encoding='utf-8') as old_md5_file:
+                with open(md5_file_path, "r", encoding='utf-8') as old_md5_file:
                     old_md5=old_md5_file.read()
                 old_md5_file.close()
-                new_md5=self.generate_md5_via_content(last_file_path)
+                new_md5=self.generate_md5_via_content(file_path)
                 drukuj(old_md5)
                 drukuj(new_md5)
                 if old_md5 != new_md5:
-                    # with open(day_md5_path, "w") as file_md5:
-                    #     file_md5.write(new_md5)
+                    self.zastap_stare_md5(file_path, md5_file_path)
                     return True
                 else:
                     return False
             else:
-                hash_md5=generate_md5_via_content(last_file_path)
-                with open(day_md5_path, "w+") as file_md5:
-                    file_md5.write(hash_md5)
-                file_md5.close()
+                self.zastap_stare_md5(file_path, md5_file_path)
                 return True
         except FileNotFoundError as e:
             drukuj(e)
             drukuj("FileNotFoundError")
             print(traceback.print_exc())
+
+    def czy_istnieje_folder_jesli_nie_stworz_go(self, path_to_generated_weewx_file, nazwa_folderu):
+        if os.path.isdir(path_to_generated_weewx_file+"/"+nazwa_folderu):
+           pass
+        else:
+           os.makedirs(path_to_generated_weewx_file+"/"+nazwa_folderu)
+
 
     def sprawdzanie_czy_dzien_sie_skonczyl(self, data_i_reszta, path_to_generated_weewx_file):
         dane=data_i_reszta.split(";")
@@ -160,25 +189,33 @@ class AktualizujCsvPliki(object):
         if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
             return False
         elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
+            nazwa_folderu_1="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y"))
+            self.czy_istnieje_folder_jesli_nie_stworz_go(path_to_generated_weewx_file, nazwa_folderu_1)
+            nazwa_folderu_2="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m"))
+            self.czy_istnieje_folder_jesli_nie_stworz_go(path_to_generated_weewx_file+"/"+nazwa_folderu_1, nazwa_folderu_2)
             nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m_%d"))+".csv"
-            os.rename(path_to_generated_weewx_file+"/"+"NOAA_this_day.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
-            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_day.csv")
+            shutil.move(path_to_generated_weewx_file+"/"+"NOAA_this_day.csv", path_to_generated_weewx_file+"/"+nazwa_folderu_1+"/"+nazwa_folderu_2+"/"+nowa_nazwa_dla_pliku)
+            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_this_day.csv")
             #dodanie dnia do granic w "obecny dzien"
-            poczatek_datetime_obiekt = poczatek_datetime_obiekt + timedelta(days=1)
-            koniec_datetime_obiekt = koniec_datetime_obiekt + timedelta(days=1)
-            drukuj("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
-            #print(poczatek_datetime_obiekt)
-            #print(datetime.datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S"))
-            poczatek_nowego_dnia=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            #print(koniec_datetime_obiekt)
-            #print(datetime.datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S"))
-            koniec_nowego_dnia=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-
-            with open(path_to_generated_weewx_file+"/"+"obecny_dzien.txt", "w") as obecny_dzien_txt:
-                obecny_dzien_txt.write(str(poczatek_nowego_dnia)+";"+str(koniec_nowego_dnia))
-            obecny_dzien_txt.close()
+            while True:
+                poczatek_datetime_obiekt=poczatek_datetime_obiekt+timedelta(days=1)
+                koniec_datetime_obiekt=koniec_datetime_obiekt+timedelta(days=1)
+                if poczatek_datetime_obiekt <= datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    drukuj("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
+                    poczatek_nowego_dnia=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                    koniec_nowego_dnia=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                    drukuj("POCZATEK NOWEGO dnia "+str(poczatek_nowego_dnia))
+                    drukuj("KONIEC NOWEGO dnia "+str(koniec_nowego_dnia))
+                    with open(path_to_generated_weewx_file+"/"+"obecny_dzien.txt", "w") as obecny_dzien_txt:
+                        obecny_dzien_txt.write(str(poczatek_nowego_dnia)+";"+str(koniec_nowego_dnia))
+                    obecny_dzien_txt.close()
+                    break
+                elif poczatek_datetime_obiekt > datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    drukuj("przestrzelislismy date z dniami")
+                    return False
+            return True
         else:
-            drukuj("koleś te dane już są starsze niż przewidzieliśmy")
+            drukuj("cos jest nnie tak z ogranniczeniami dnia - sprawdz obecny_dzien.txt")
             return False
     
     def sprawdzanie_czy_tydzien_sie_skonczyl(self, data_i_reszta, path_to_generated_weewx_file):
@@ -197,20 +234,35 @@ class AktualizujCsvPliki(object):
         if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
             return False
         elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
-            nowa_nazwa_dla_pliku="NOAA_tydzien_ktory_juz_minal.csv"
-            os.rename(path_to_generated_weewx_file+"/"+"NOAA_this_week.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
-            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_week.csv")
+            nazwa_folderu_1="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y"))
+            self.czy_istnieje_folder_jesli_nie_stworz_go(path_to_generated_weewx_file, nazwa_folderu_1)
+            nazwa_folderu_2="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m"))
+            self.czy_istnieje_folder_jesli_nie_stworz_go(path_to_generated_weewx_file+"/"+nazwa_folderu_1, nazwa_folderu_2)
+            nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m"))+"_pon_"+str(poczatek_datetime_obiekt.strftime("%d"))+".csv"
+            shutil.move(path_to_generated_weewx_file+"/"+"NOAA_this_week.csv", path_to_generated_weewx_file+"/"+nazwa_folderu_1+"/"+nazwa_folderu_2+"/"+nowa_nazwa_dla_pliku)
+            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_this_week.csv")
             #dodanie dnia do granic w "obecny tydzien"
-            poczatek_datetime_obiekt = poczatek_datetime_obiekt + timedelta(days=7)
-            koniec_datetime_obiekt = koniec_datetime_obiekt + timedelta(days=7)
-            drukuj("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
-            poczatek_nowego_tygodnia=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            koniec_nowego_tygodnia=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            drukuj("POCZATEK NOWEGO tygodnia "+str(poczatek_nowego_tygodnia))
-            drukuj("KONIEC NOWEGO tygodnia "+str(koniec_nowego_tygodnia))
-            with open(path_to_generated_weewx_file+"/"+"obecny_tydzien.txt", "w") as obecny_tygodnia_txt:
-                obecny_tygodnia_txt.write(str(poczatek_nowego_tygodnia)+";"+str(koniec_nowego_tygodnia))
-            obecny_tygodnia_txt.close()
+            while True:
+                poczatek_datetime_obiekt = poczatek_datetime_obiekt + timedelta(days=7)
+                koniec_datetime_obiekt = koniec_datetime_obiekt + timedelta(days=7)
+                poczatek_nowego_tygodnia=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                koniec_nowego_tygodnia=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                drukuj("Pomiar                   "+str())
+                drukuj("POCZATEK NOWEGO tygodnia "+str(poczatek_nowego_tygodnia))
+                drukuj("KONIEC NOWEGO tygodnia   "+str(koniec_nowego_tygodnia))
+                drukuj("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
+                if poczatek_datetime_obiekt <= datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    #poczatek_nowego_tygodnia=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                    #koniec_nowego_tygodnia=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                    #drukuj("POCZATEK NOWEGO tygodnia "+str(poczatek_nowego_tygodnia))
+                    #drukuj("KONIEC NOWEGO tygodnia "+str(koniec_nowego_tygodnia))
+                    with open(path_to_generated_weewx_file+"/"+"obecny_tydzien.txt", "w") as obecny_tygodnia_txt:
+                        obecny_tygodnia_txt.write(str(poczatek_nowego_tygodnia)+";"+str(koniec_nowego_tygodnia))
+                    obecny_tygodnia_txt.close()
+                    break
+                elif poczatek_datetime_obiekt > datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    drukuj("przestrzelislismy date z tygodniami")
+                    return False
             return True
         else:
             drukuj("koleś te dane już są starsze niż przewidzieliśmy")
@@ -239,21 +291,28 @@ class AktualizujCsvPliki(object):
         if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
             return False
         elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
-            nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m_%d"))+".csv"
-            os.rename(path_to_generated_weewx_file+"/"+"NOAA_this_month.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
-            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_month.csv")
-            #dodanie dnia do granic w "obecny dzien"
-            poczatek_datetime_obiekt = pierwszy_dzien_kolejnego_miesiaca(poczatek_datetime_obiekt)
-            koniec_datetime_obiekt = ostatni_dzien_kolejnego_miesiaca(poczatek_datetime_obiekt)
-            #koniec_datetime_obiekt = koniec_datetime_obiekt + datetime.timedelta(days=1)
-            drukuj("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
-            poczatek_nowego_miesiaca=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            koniec_nowego_miesiaca=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            drukuj("POCZATEK NOWEGO MIESIACA "+str(poczatek_nowego_miesiaca))
-            drukuj("KONIEC NOWEGO MIESIACA "+str(koniec_nowego_miesiaca))
-            with open(path_to_generated_weewx_file+"/"+"obecny_miesiac.txt", "w") as obecny_miesiac_txt:
-                obecny_miesiac_txt.write(str(poczatek_nowego_miesiaca)+";"+str(koniec_nowego_miesiaca))
-            obecny_miesiac_txt.close()
+            nazwa_folderu_1="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y"))
+            self.czy_istnieje_folder_jesli_nie_stworz_go(path_to_generated_weewx_file, nazwa_folderu_1)
+            nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m"))+".csv"
+            shutil.move(path_to_generated_weewx_file+"/"+"NOAA_this_month.csv", path_to_generated_weewx_file+"/"+nazwa_folderu_1+"/"+nowa_nazwa_dla_pliku)
+            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_this_month.csv")
+            while True:
+                #dodanie dnia do granic w "obecny miesiac"
+                poczatek_datetime_obiekt = self.pierwszy_dzien_kolejnego_miesiaca(poczatek_datetime_obiekt)
+                koniec_datetime_obiekt = self.ostatni_dzien_kolejnego_miesiaca(poczatek_datetime_obiekt)
+                #koniec_datetime_obiekt = koniec_datetime_obiekt + datetime.timedelta(days=1)
+                if poczatek_datetime_obiekt <= datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                     poczatek_nowego_miesiaca=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                     koniec_nowego_miesiaca=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                     drukuj("POCZATEK NOWEGO MIESIACA "+str(poczatek_nowego_miesiaca))
+                     drukuj("KONIEC NOWEGO MIESIACA "+str(koniec_nowego_miesiaca))
+                     with open(path_to_generated_weewx_file+"/"+"obecny_miesiac.txt", "w") as obecny_miesiac_txt:
+                         obecny_miesiac_txt.write(str(poczatek_nowego_miesiaca)+";"+str(koniec_nowego_miesiaca))
+                     obecny_miesiac_txt.close()
+                     break
+                elif poczatek_datetime_obiekt > datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    drukuj("przestrzelislismy date z miesiacami")
+                    return False
             return True
         else:
             drukuj("koleś te dane już są starsze niż przewidzieliśmy dla tego raportu")
@@ -277,28 +336,39 @@ class AktualizujCsvPliki(object):
         if datetime_pomiaru > poczatek_datetime_obiekt and datetime_pomiaru < koniec_datetime_obiekt:
             return False
         elif datetime_pomiaru > koniec_datetime_obiekt and datetime_pomiaru > poczatek_datetime_obiekt: 
-            nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y_%m_%d"))+".csv"
-            os.rename(path_to_generated_weewx_file+"/"+"NOAA_this_year.csv", path_to_generated_weewx_file+"/"+nowa_nazwa_dla_pliku)
-            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_last_year.csv")
+            nazwa_folderu_1="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y"))
+            self.czy_istnieje_folder_jesli_nie_stworz_go(path_to_generated_weewx_file, nazwa_folderu_1)
+            nowa_nazwa_dla_pliku="NOAA_"+str(poczatek_datetime_obiekt.strftime("%Y"))+".csv"
+            shutil.move(path_to_generated_weewx_file+"/"+"NOAA_this_year.csv", path_to_generated_weewx_file+"/"+nazwa_folderu_1+"/"+nowa_nazwa_dla_pliku)
+            shutil.copy2(path_to_generated_weewx_file+"/"+"NOAA_wzor.csv", path_to_generated_weewx_file+"/"+"NOAA_this_year.csv")
             #dodanie dnia do granic w "obecny rok"
-            poczatek_datetime_obiekt = pierwszy_dzien_kolejnego_roku(poczatek_datetime_obiekt)
-            koniec_datetime_obiekt = ostatni_dzien_kolejnego_roku(koniec_datetime_obiekt)
-            drukuj("--Verti est sua aeterni, Corda nostra solum tibi. Sprawdzenie czy delta działa")
-            poczatek_nowego_roku=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            koniec_nowego_roku=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
-            drukuj("POCZATEK NOWEGO ROKU "+str(poczatek_nowego_roku))
-            drukuj("KONIEC NOWEGO ROKU "+str(koniec_nowego_roku))
-            with open(path_to_generated_weewx_file+"/"+"obecny_rok.txt", "w") as obecny_rok_txt:
-                obecny_rok_txt.write(str(poczatek_nowego_roku)+";"+str(koniec_nowego_roku))
-            obecny_rok_txt.close()
+            while True:
+                poczatek_datetime_obiekt = self.pierwszy_dzien_kolejnego_roku(poczatek_datetime_obiekt)
+                koniec_datetime_obiekt = self.ostatni_dzien_kolejnego_roku(koniec_datetime_obiekt)
+                poczatek_nowego_roku=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                koniec_nowego_roku=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                drukuj("POCZATEK NOWEGO ROKU "+str(poczatek_nowego_roku))
+                drukuj("KONIEC NOWEGO ROKU "+str(koniec_nowego_roku))
+                if poczatek_datetime_obiekt <= datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    #poczatek_nowego_roku=datetime.strftime(poczatek_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                    #koniec_nowego_roku=datetime.strftime(koniec_datetime_obiekt, "%d/%m/%y %H:%M:%S")
+                    #drukuj("POCZATEK NOWEGO ROKU "+str(poczatek_nowego_roku))
+                    #drukuj("KONIEC NOWEGO ROKU "+str(koniec_nowego_roku))
+                    with open(path_to_generated_weewx_file+"/"+"obecny_rok.txt", "w") as obecny_rok_txt:
+                        obecny_rok_txt.write(str(poczatek_nowego_roku)+";"+str(koniec_nowego_roku))
+                    obecny_rok_txt.close()
+                elif poczatek_datetime_obiekt > datetime_pomiaru and koniec_datetime_obiekt > datetime_pomiaru:
+                    drukuj("przestrzelislismy date z latami")
+                    return False
             return True
         else:
             drukuj("koleś te dane już są starsze niż przewidzieliśmy dla tego raportu")
             return False
-    
+
 
 def main():
     aktualizuj_csv_pliki=AktualizujCsvPliki()
+
 
 if __name__ == "__main__":
     drukuj("------AKTUALIZUJ_CSV_PLIKI--------")
